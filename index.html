@@ -1,0 +1,1475 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+
+    <title>Пространственная регрессия</title>
+    <link rel="stylesheet" href="dist/reveal.css" />
+    <link rel="stylesheet" href="dist/theme/simple.css" id="theme" />
+    <link rel="stylesheet" href="plugin/highlight/monokai.css" />
+	<link rel="stylesheet" href="css/layout.css" />
+	<link rel="stylesheet" href="plugin/customcontrols/style.css">
+
+	<link rel="stylesheet" href="plugin/reveal-pointer/pointer.css" />
+
+
+    <script defer src="dist/fontawesome/all.min.js"></script>
+
+	<script type="text/javascript">
+		var forgetPop = true;
+		function onPopState(event) {
+			if(forgetPop){
+				forgetPop = false;
+			} else {
+				parent.postMessage(event.target.location.href, "app://obsidian.md");
+			}
+        }
+		window.onpopstate = onPopState;
+		window.onmessage = event => {
+			if(event.data == "reload"){
+				window.document.location.reload();
+			}
+			forgetPop = true;
+		}
+
+		function fitElements(){
+			const itemsToFit = document.getElementsByClassName('fitText');
+			for (const item in itemsToFit) {
+				if (Object.hasOwnProperty.call(itemsToFit, item)) {
+					var element = itemsToFit[item];
+					fitElement(element,1, 1000);
+					element.classList.remove('fitText');
+				}
+			}
+		}
+
+		function fitElement(element, start, end){
+
+			let size = (end + start) / 2;
+			element.style.fontSize = `${size}px`;
+
+			if(Math.abs(start - end) < 1){
+				while(element.scrollHeight > element.offsetHeight){
+					size--;
+					element.style.fontSize = `${size}px`;
+				}
+				return;
+			}
+
+			if(element.scrollHeight > element.offsetHeight){
+				fitElement(element, start, size);
+			} else {
+				fitElement(element, size, end);
+			}		
+		}
+
+
+		document.onreadystatechange = () => {
+			fitElements();
+			if (document.readyState === 'complete') {
+				if (window.location.href.indexOf("?export") != -1){
+					parent.postMessage(event.target.location.href, "app://obsidian.md");
+				}
+				if (window.location.href.indexOf("print-pdf") != -1){
+					let stateCheck = setInterval(() => {
+						clearInterval(stateCheck);
+						window.print();
+					}, 250);
+				}
+			}
+	};
+
+
+        </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides"><section  data-markdown><script type="text/template"><!-- .slide: class="drop" template="tpl-con-title" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Анализ точечных паттернов
+<!-- .element: style="font-size: 60px" -->
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+**Точечный процесс** - случайный процесс результатом которого становится точечный паттерн. 
+<!-- .element: style="font-size: 50px" -->
+
+**Точечный паттерн** - неупорядоченный набор точек
+<!-- .element: style="font-size: 50px" -->
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204114242.png" alt="" style="object-fit: scale-down">
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250205100258.png" alt="" style="object-fit: scale-down">
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204114215.png" alt="" style="object-fit: scale-down">
+
+ 
+
+<style>
+.horizontal_dotted_line{
+  border-bottom: 2px dotted gray;
+} 
+} 
+</style>
+
+<div class="horizontal_dotted_line" style="position: absolute; left: 3%; top: 94%; height: 0%; width: 94%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 64%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="has-light-background" style="background-color: white; position: absolute; left: 5%; top: 10%; height: 60%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left">
+
+
+
+<img src="Pasted image 20250204115114.png" alt="" style="object-fit: scale-down">
+
+
+</div>
+
+<div class="" style="position: absolute; left: 50%; top: 20%; height: 50%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left">
+
+
+<img src="Pasted image 20250204115149.png" alt="" style="object-fit: scale-down">
+
+
+</div>
+
+
+<div class="" style="padding: 0 30px; box-sizing: border-box; position: absolute; left: 0%; top: 64%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://geographicdata.science/book/notebooks/08_point_pattern_analysis.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204121125.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **Методы, основанные на оценке плотности**
+</div>
+
+<!-- .element: style="font-size: 50px; line-height: 1.7; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+
+<div class="block">
+
+Методы, основанные на оценке плотности, описывают паттерн в терминах распределения по территории: как правило, количество объектов на определенную площадь или единицу площади.
+
+Оценка осуществляется на основе свойств *первого порядка*.
+</div>
+
+<!-- .element: style="font-size: 30px; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+
+<div class="block">
+
+<div class="callout callout-color2">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-fire-alt" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Свойство паттерна _первого порядка_ основано на вариации плотности наблюдений на территории исследования. Например, распределение вида растительности в зависимости от свойств почвы, что приводит к четкой группировке растений в определенных областях. 
+
+</div>
+</div>
+<div class="callout-content">
+
+</div>
+</div>
+</div>
+
+<!-- .element: style="font-size: 20px; line-height: 1.7; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left" -->
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 64%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **Глобальная плотность**
+</div>
+
+<!-- .element: style="font-size: 45px; line-height: 1.7; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+<div class="block">
+
+Отношение количества наблюдений к общей площади области исследования:
+`$\hat \lambda=\dfrac {n}{a}$` 
+</div>
+
+<!-- .element: style="font-size: 25px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left" -->
+
+<div class="" style="position: absolute; left: 20%; top: 25%; height: 60%; width: 60%; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center">
+
+<img src="Pasted image 20250204122000.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="padding: 0 0px; box-sizing: border-box; position: absolute; left: 0%; top: 67%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left">
+
+<div class="block">
+
+Пример точечного паттерна, где n = 31 и область наблюдения 10 на 10  единиц. Плотность точек: 31/100 = 0.31 точка на единицу площади.
+</div>
+
+ <!-- .element: style="font-size: 20px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left" -->
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 64%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **Локальная плотность**
+</div>
+
+<!-- .element: style="font-size: 45px; line-height: 1.7; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+Плотность точек определяется _отдельно для различных частей области исследования_. 
+
+Такой подход помогает оценить плотность и, как следствие, точечный процесс, локально, с учетом постоянной интенсивности процесса `$\hat \lambda$`. Стационарность интенсивности может играть важную роль, так как может впоследствии учитываться при других методах оценки паттерна.
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 64%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **Плотность по квадрантам**
+</div>
+
+<!-- .element: style="font-size: 45px; line-height: 1.7; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+
+В этом методе оценки локальной плотности **область исследования делится на подобласти (_квадранты_).**
+
+Далее <mark>плотность точек рассчитывается отдельно для каждой из подобластей путем деления числа точек на площади квадрантов.</mark>
+
+<div class="block">
+
+<div class="callout callout-color-default">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-pencil-alt" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Квадранты могут быть как фигурами любой формы, например,  шестиугольники, треугольники, квадраты. В примерах далее показаны квадратные ячейки. 
+
+</div>
+</div>
+<div class="callout-content">
+
+</div>
+</div>
+</div>
+
+ <!-- .element: style="font-size: 30px" -->
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 64%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="position: absolute; left: 25%; top: 0%; height: 100%; width: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center">
+
+<img src="Pasted image 20250204123920.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="position: absolute; left: 0%; top: 0%; height: 100%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center">
+
+<img src="Pasted image 20250204124148.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+***Выбор формы и размера ячейки может значительно повлиять на результат вычисления локальной плотности*** <!-- .element: style="font-size: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+
+<div class="callout callout-color2">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-fire-alt" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Если ячейки будут слишком маленького размера, то может оказаться, что часть из них пустая, что не даст никакой информации о распределении. Если размер ячеек будет слишком большим, то есть опасность упустить изменение плотности точек.  <!-- .element: style="font-size: 30px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left" -->
+
+</div>
+</div>
+<div class="callout-content">
+
+</div>
+</div>
+
+<br>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 64%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="block">
+
+_Ячейки не обязательно должны быть универсальной формы и размера для всей области исследования, они могут также задаваться на основе некоторой переменной **ковариаты**._ 
+</div>
+
+ <!-- .element: style="font-size: 40px" -->
+
+Например, если есть гипотеза о том, что точечный процесс находится под влиянием высоты поверхности, квадранты могут быть определены на основе выделения диапазонов изменения высоты. В этом случае все подобласти квадранты будут иметь свою форму и размер.
+</div>
+
+ <!-- .element: style="font-size: 30px" -->
+
+<div class="block">
+
+<div class="callout callout-color-default">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-pencil-alt" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Получение дискретных областей на основе непрерывных данных называется **тесселяцией**. Результат этого процесса представляет собой **тесселированную поверхность.** 
+
+</div>
+</div>
+<div class="callout-content">
+
+</div>
+</div>
+</div>
+
+ <!-- .element: style="font-size: 25px" -->
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="position: absolute; left: 0%; top: 0%; height: 40%; width: 80%; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center">
+
+<img src="Pasted image 20250204130053.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 17%; height: 50%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+<div class="block">
+
+Пример ковариаты. На картинке слева показана карта высот. На картинке справа показана карта высот, разбитая на 4 подобласти, для которых будет рассчитываться локальная плотность.
+</div>
+
+ 
+<!-- .element: style="font-size: 20px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 45%; height: 40%; width: 80%; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center">
+
+<img src="Pasted image 20250204131219.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 62%; height: 50%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+<div class="block">
+
+Картинка слева показывает количество точек для каждой из подобластей. Картинка справа показывает плотность точек в каждой области (количество точек, деленное на площадь подобласти).
+</div>
+
+ 
+<!-- .element: style="font-size: 20px" -->
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="position: absolute; left: 0%; top: 0%; height: 40%; width: 80%; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center">
+
+<img src="Pasted image 20250204132126.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 20%; height: 50%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+<div class="block">
+
+Пример анализа точечного паттерна на основе ковариаты с другим разбиением на подобласти. Обратите внимание на результаты расчета плотности.
+</div>
+
+ 
+<!-- .element: style="font-size: 20px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 50%; height: 40%; width: 80%; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left">
+
+<img src="Пособия/Материалы для книги по визуализации/Картинки/Pasted image 20241030145111.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 30%; top: 60%; height: 50%; width: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+<div class="block">
+
+Проблема изменяющейся территориальной единицы
+</div>
+
+ 
+<!-- .element: style="font-size: 20px" -->
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **Ядерная оценка плотности**
+</div>
+
+<!-- .element: style="font-size: 45px; line-height: 1.7; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+Как и для плотности по квадрантам ядерная оценка плотности осуществляется как **локальная плотность для отдельных подмножеств**, но здесь подобласти, в пределах которых осуществляется расчет пересекаются, создавая _перемещающееся окно_. Это перемещающееся окно определяется **ядром**.
+<!-- .element: style="font-size: 30px" -->
+
+<div class="callout callout-color-default">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-pencil-alt" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Ядерная оценка плотности создает сетку значений плотности, размер ячеек которой меньше размера ядра. Каждая ячейка получает значение, рассчитанное в пределах _перемещающегося окна с центром в этой ячейке_. 
+
+</div>
+</div>
+<div class="callout-content">
+
+</div>
+</div>
+<!-- .element: style="font-size: 25px" -->
+
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 64%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204132959.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 64%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://tsamsonov.github.io/r-spatstat-course/points.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204133224.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="position: absolute; left: 20%; top: 0%; height: 40%; width: 70%; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left">
+
+
+<img src="Pasted image 20250204133448.png" alt="" style="object-fit: scale-down">
+
+
+</div>
+
+<div class="" style="position: absolute; left: 55%; top: 0%; height: 40%; width: 70%; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left">
+
+
+<img src="Pasted image 20250204133509.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 45%; height: 50%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+Ядро характеризуется не только формой и размером окна, но еще и _весом точек_ в пределах используемой ядерной функции. Самый простой вариант, в котором всем точкам присваивается одинаковый вес.
+<!-- .element: style="font-size: 30px" -->
+<div class="callout callout-color-default">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-pencil-alt" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Некоторые **функции ядерной плотности** присваивают веса обратно пропорционально расстоянию до центра ядра. Некоторые функции используют _гауссову или квадратичную_ функцию распределения. Такие функции позволяют создать более сглаженные карты плотности.
+
+</div>
+</div>
+<div class="callout-content">
+
+</div>
+</div>
+<!-- .element: style="font-size: 20px" -->
+
+</div> 
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204133321.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204135020.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204135055.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://tsamsonov.github.io/r-spatstat-course/points.html <!-- .element: style="font-size: 15px" -->
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **Методы, основанные на расстоянии**
+</div>
+
+<!-- .element: style="font-size: 45px; line-height: 1.7; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+
+<div class="block">
+
+Альтернативой методам, основанным на плотности, являются **методы, основанные на расстоянии**, в которых первоочередным становится _распределение точек относительно друг друга_ (то есть свойство паттерна второго порядка), а не распределение точек по исследуемой территории.
+</div>
+
+ <!-- .element: style="font-size: 30px; line-height: 1.7; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left" -->
+<div class="block">
+
+<div class="callout callout-color2">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-fire-alt" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+_Свойство второго порядка_ точечного паттерна в первую очередь описывает влияние наблюдений друг на друга. Например, распределение одного вида растений на основе того, что в определенном месте уже есть эти растения, что приводит к распространению их семян и возникновению групп растений этого вида, как следствие. 
+
+</div>
+</div>
+<div class="callout-content">
+
+</div>
+</div>
+</div>
+
+<!-- .element: style="font-size: 25px; line-height: 1.7; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left" -->
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **Ближайший средний сосед**
+</div>
+
+<!-- .element: style="font-size: 45px; line-height: 1.7; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+Анализ ближайшего среднего соседа (average nearest neighbor (ANN)) основан на среднем расстоянии от каждой точки до ближайшего соседа.
+
+<!-- .element: style="font-size: 25px; line-height: 1.7; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left" -->
+
+<div class="" style="position: absolute; left: 0%; top: 30%; height: 70%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center">
+
+<img src="Pasted image 20250204140714.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="position: absolute; left: 0%; top: 0%; height: 40%; width: 80%; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center">
+
+<img src="Pasted image 20250204141235.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 10%; height: 50%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+<div class="block">
+
+Три различных точечных паттерна с одинаковым количеством точек (20)
+</div>
+
+ 
+<!-- .element: style="font-size: 20px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 40%; height: 40%; width: 80%; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center">
+
+<img src="Pasted image 20250204141323.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 60%; height: 50%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+<div class="block">
+
+Графики зависимости ANN от числа соседей для трех паттернов. Черным цветом показан паттерн с одним кластером, синим - с двумя, а красным - третий со случайным распределением точек.
+</div>
+
+ 
+<!-- .element: style="font-size: 20px" -->
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **K функция**
+</div>
+
+<!-- .element: style="font-size: 45px; line-height: 1.7; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+
+<div class="block">
+
+`$K(d)=\dfrac { \sum_{n=1}^{i} N_{S_i}}{d} \div \hat \lambda$`
+
+<div class="block">
+
+`$N_{S_i}$` - количество точек в определенном радиусе от точки `$S_i$`,
+
+`$d$` - количество используемых радиусов (интервалов расстояния),
+
+`$\hat \lambda$` - глобальная плотность.
+</div>
+
+ <!-- .element: style="font-size: 30px; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left" -->
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Снимок экрана 2025-02-04 в 15.39.40.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="" drag="150 100">
+
+<img src="Pasted image 20250204154020.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="block">
+
+Если значения функции `$K$` больше, чем `$K_{expected}$`, это может говорить о наличии кластеров в рамках определенного радиуса; значения функции `$K$` меньше, чем `$K_{expected}$` показывают произвольное распределение точек на определенном расстоянии. 
+
+В приведенном примере магазины более сгруппированы на расстоянии более 12 км.
+</div>
+
+ <!-- .element: style="font-size: 25px" -->
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **L функция**
+</div>
+
+<!-- .element: style="font-size: 45px; line-height: 1.7; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+
+<div class="block">
+
+`$L=\sqrt{\dfrac{K(d)}{\pi}}-d$`
+
+Сложность применения `$K$` функции состоит в том, что она имеет тенденцию изгибаться кверху, что не всегда позволяет увидеть небольшую разницу между `$K$` и `$K_{expected}$`. 
+
+Один из методов справиться с этим - пересчитать значения так, чтобы ожидаемые превратились в горизонтальную линию.
+</div>
+
+ <!-- .element: style="font-size: 25px" -->
+
+<div class="" style="" drag="200 100">
+
+<img src="Pasted image 20250204154620.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **Функция парной корреляции `$g$`**
+</div>
+
+<!-- .element: style="font-size: 50px; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+
+<div class="block">
+
+Недостатком `$K$` функции (и как следствие `$L$` функции) то, что она имеет кумулятивную природу, что может затруднять выявление того, на каком именно расстоянии точечный паттерн начинает группироваться и появляется отклонение от `$K_{expected}$`, так как _все точки_ на расстоянии `$r$` вносят вклад в значения `$K(r)$`.
+
+**Функция парной корреляции**, `$g$` - это модифицированная версия `$K$` функции, в которой вместо суммирования _всех точек_ в пределах расстояния `$r$` учитываеются только _точки, попавшие в определенный диапазон_. 
+</div>
+
+ <!-- .element: style="font-size: 35px" -->
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="position: absolute; left: 0%; top: 0%; height: 50%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+<img src="Pasted image 20250204155245.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 45%; height: 50%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: space-evenly" align="left">
+
+<img src="Pasted image 20250204155252.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="position: absolute; left: 30%; top: 50%; height: 50%; width: 70%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+`$g$` функция для расположения магазинов Walmart в штате Массачусетс. Интерпретация аналогична `$K$` и `$L$` функциям. 
+<!-- .element: style="font-size: 20px" -->
+
+Если `$g(r) = 1$`, тогда расстояние между точками в пределах `$r$` представляет полную пространственную случайность CSR (complete spatial randomness). Если `$g(r) > 1$`, то точки более сгруппированы, чем предполагает CSR. Если `$g(r) < 1$`, то точки более разбросаны, чем ожидалось. Обратите внимание, что `$g$` не может быть меньше 0.
+<!-- .element: style="font-size: 20px" -->
+</div> 
+
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://mgimond.github.io/Spatial/chp11_0.html <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="callout callout-color5">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-exclamation-triangle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Все методы, основанные на расстоянии предполагают, что данные стационарны. 
+
+</div>
+</div>
+<div class="callout-content">
+
+(то есть отсутствует какой-либо тренд или изменение в интенсивности процесса)
+
+</div>
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+# Кластеризация<!-- .element: style="font-size: 60px" -->
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+Кластеризация или кластерный анализ - это метод **обучения без учителя**, который позволяет разделить точки на группы с тем условием, что внутри группы они будут похожи по характеристикам, а разные группы будут отличаться между собой.
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **Разделительные алгоритмы**
+</div>
+
+<!-- .element: style="font-size: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+</div>
+
+
+## K-средних
+</div>
+
+<!-- .element: style="font-size: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+<div class="" style="position: absolute; left: 0%; top: 10%; height: 70%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+<img src="Pasted image 20250204161150.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://cartetika.ru/tpost/uun5jy5tk1-klasterizatsiya-prostranstvennih-dannih <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<iframe width="800" height="400" src="https://www.youtube.com/embed/R2e3Ls9H_fc?si=S902dD1497Mc5t3E" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204161445.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://cartetika.ru/tpost/uun5jy5tk1-klasterizatsiya-prostranstvennih-dannih <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **Иерархические алгоритмы**
+</div>
+
+<!-- .element: style="font-size: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+
+<img src="Pasted image 20250204164448.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://quantdare.com/hierarchical-clustering/ <!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<iframe width="800" height="400" src="https://www.youtube.com/embed/EUQY3hL38cw?si=aWE9hw52EiJPm1W7" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="callout callout-color5">
+<div class="callout-title">
+<div class="callout-icon">
+
+<i class="fas fa-exclamation-triangle" ></i>
+
+
+</div>
+<div class="callout-title-inner">
+
+Иерархические и разделительные методы хорошо работают в тех случаях, когда есть явно обособленные и компактные кластеры
+
+</div>
+</div>
+<div class="callout-content">
+
+Реальные данные зачастую содержат выбросы и шум, что приводит к появлению некомпактных кластеров.
+
+</div>
+</div>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+</div>
+
+
+## **DBSCAN**
+</div>
+
+<!-- .element: style="font-size: 45px; display: flex; flex-direction: column; align-items: center; justify-content: center" align="center" -->
+
+Density-Based Spatial Clustering of Applications with Noise (DBSCAN) (основанная на плотности кластеризация с учетом шумов)  - это базовый алгоритм кластеризации на основе плотности. Этот алгоритм может выделять кластеры сложной формы и различного размера из больших объемов данных, содержащих в себе шум и выбросы. <!-- .element: style="font-size: 25px" -->
+
+<img src="Pasted image 20250204164912.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://www.kdnuggets.com/2020/04/dbscan-clustering-algorithm-machine-learning.html<!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+DBSCAN использует два основных параметра:
+
+- **minPts:** минимальное количество точек, сгруппированных между собой, чтобы считаться плотным ядром кластера. 
+- **eps (ε):** расстояние, в пределах которого ищутся точки в окружении. 
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://www.kdnuggets.com/2020/04/dbscan-clustering-algorithm-machine-learning.html<!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<iframe width="800" height="400" src="https://www.youtube.com/embed/_A9Tq6mGtLI?si=MzGz0HpHu9ydO-dH" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+По результатам кластеризации DBSCAN выделяет три типа точек:
+
+<div class="block">
+
+- **Ядро** — точки, которые находятся в окружении минимум _m_ точек в пределах расстояния _n_ от них.
+</div>
+
+ <!-- .element: style="font-size: 40px" class="fragment" data-fragment-index="1" -->
+<div class="block">
+
+- **Граничные точки** — точки, которые содержат минимум одну точку из ядра в пределах расстояния _n_.
+</div>
+
+ <!-- .element: style="font-size: 40px" class="fragment" data-fragment-index="2" -->
+<div class="block">
+
+- **Шум** — точки, не попавшие ни в ядро, ни в граничные точки, то ечть в пределах расстояния _n_ находится менее _m_ точек. 
+</div>
+
+ <!-- .element: style="font-size: 40px" class="fragment" data-fragment-index="3" -->
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://www.kdnuggets.com/2020/04/dbscan-clustering-algorithm-machine-learning.html<!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<div class="" style="position: absolute; left: 10%; top: 0%; height: 90%; width: 70%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+<img src="Pasted image 20250204171706.png" alt="" style="object-fit: scale-down">
+
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+https://habr.com/ru/articles/322034/<!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+## Как может применяться для пространственных данных?<!-- .element: style="font-size: 50px" -->
+
+- координаты могут являться одним из параметров кластеризации <!-- .element: style="font-size: 40px" class="fragment" data-fragment-index="1" -->
+
+- пространственные характеристики могут быть преобразованы в свойства местоположения <!-- .element: style="font-size: 40px" class="fragment" data-fragment-index="2" -->
+
+- хорошо позволяет выделять "горячие точки"<!-- .element: style="font-size: 40px" class="fragment" data-fragment-index="3" -->
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204173357.png" alt="" style="object-fit: scale-down">
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="block">
+
+Точки покрытия интернета в городе Лагос, кластеризация K-средних
+
+_Основные параметры кластеризации - координаты_
+</div>
+
+ <!-- .element: style="font-size: 20px" -->
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+<div class="block">
+
+source: https://boosty.to/geoanalytics/posts/e42ddcea-e99d-46fd-b597-58af55ef5002
+</div>
+
+<!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204173426.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="block">
+
+Местоположение кофеен Starbucks в Москве (2020) поверх кластеризованных шестиугольников, иерархическая кластеризация
+
+_Параметры кластеризации - близость к инфраструктуре, улично-дорожная сеть, типология зданий, НЕ МЕСТОПОЛОЖЕНИЕ_
+</div>
+
+ <!-- .element: style="font-size: 20px" -->
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+<div class="block">
+
+source: https://boosty.to/geoanalytics/posts/e42ddcea-e99d-46fd-b597-58af55ef5002
+</div>
+
+<!-- .element: style="font-size: 15px" -->
+</div>
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section><section  data-markdown><script type="text/template"><!-- .slide: class="drop" -->
+<div class="" style="position: absolute; left: 0px; top: 0px; height: 700px; width: 960px; min-height: 700px; display: flex; flex-direction: column; align-items: center; justify-content: center" absolute="true">
+
+<img src="Pasted image 20250204173451.png" alt="" style="object-fit: scale-down">
+
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 0%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-start" align="left">
+
+<div class="block">
+
+Точки рабочей активности в Орландо, Флорида; DBSCAN кластеризация (eps=200m)
+
+_Параметры кластеризации - агрегированные координаты_
+</div>
+
+ <!-- .element: style="font-size: 20px" -->
+</div>
+
+<div class="" style="padding: 0 10px; box-sizing: border-box; position: absolute; left: 0%; top: 70%; height: 30%; width: 100%; display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end" align="left">
+
+<div class="block">
+
+source: https://boosty.to/geoanalytics/posts/e42ddcea-e99d-46fd-b597-58af55ef5002
+</div>
+
+<!-- .element: style="font-size: 15px" -->
+</div>
+
+
+<div class="" style="position: absolute; left: 0%; top: 95%; height: 5%; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center" >
+
+© 2025 Балтыжакова Т.И.<!-- .element: style="font-size: 10px" -->
+</div>
+</div></script></section></div>
+    </div>
+
+    <script src="dist/reveal.js"></script>
+
+    <script src="plugin/markdown/markdown.js"></script>
+    <script src="plugin/highlight/highlight.js"></script>
+    <script src="plugin/zoom/zoom.js"></script>
+    <script src="plugin/notes/notes.js"></script>
+    <script src="plugin/math/math.js"></script>
+	<script src="plugin/mermaid/mermaid.js"></script>
+	<script src="plugin/chart/chart.min.js"></script>
+	<script src="plugin/chart/plugin.js"></script>
+	<script src="plugin/customcontrols/plugin.js"></script>
+	<script src="plugin/reveal-pointer/pointer.js"></script>
+
+    <script>
+      function extend() {
+        var target = {};
+        for (var i = 0; i < arguments.length; i++) {
+          var source = arguments[i];
+          for (var key in source) {
+            if (source.hasOwnProperty(key)) {
+              target[key] = source[key];
+            }
+          }
+        }
+        return target;
+      }
+
+	  function isLight(color) {
+		let hex = color.replace('#', '');
+
+		// convert #fff => #ffffff
+		if(hex.length == 3){
+			hex = `${hex[0]}${hex[0]}${hex[1]}${hex[1]}${hex[2]}${hex[2]}`;
+		}
+
+		const c_r = parseInt(hex.substr(0, 2), 16);
+		const c_g = parseInt(hex.substr(2, 2), 16);
+		const c_b = parseInt(hex.substr(4, 2), 16);
+		const brightness = ((c_r * 299) + (c_g * 587) + (c_b * 114)) / 1000;
+		return brightness > 155;
+	}
+
+	var bgColor = getComputedStyle(document.documentElement).getPropertyValue('--r-background-color').trim();
+	var isLight = isLight(bgColor);
+
+	if(isLight){
+		document.body.classList.add('has-light-background');
+	} else {
+		document.body.classList.add('has-dark-background');
+	}
+
+      // default options to init reveal.js
+      var defaultOptions = {
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+        transition: 'default', // none/fade/slide/convex/concave/zoom
+        plugins: [
+          RevealMarkdown,
+          RevealHighlight,
+          RevealZoom,
+          RevealNotes,
+          RevealMath.MathJax3,
+		  RevealMermaid,
+		  RevealChart,
+		  RevealCustomControls,
+	      RevealPointer,
+        ],
+
+
+    	allottedTime: 120 * 1000,
+
+		mathjax3: {
+			mathjax: 'plugin/math/mathjax/tex-mml-chtml.js',
+		},
+		markdown: {
+		  gfm: true,
+		  mangle: true,
+		  pedantic: false,
+		  smartLists: false,
+		  smartypants: false,
+		},
+
+		mermaid: {
+			theme: isLight ? 'default' : 'dark',
+		},
+
+		customcontrols: {
+			controls: [
+			]
+		},
+      };
+
+      // options from URL query string
+      var queryOptions = Reveal().getQueryHash() || {};
+
+      var options = extend(defaultOptions, {"width":960,"height":700,"margin":0.04,"controls":true,"progress":true,"slideNumber":true,"transition":"none","transitionSpeed":"default"}, queryOptions);
+    </script>
+
+    <script>
+      Reveal.initialize(options);
+    </script>
+  </body>
+
+  <!-- created with Advanced Slides -->
+</html>
